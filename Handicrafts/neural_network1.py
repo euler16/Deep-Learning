@@ -25,7 +25,7 @@ class NeuralNet:
 		self.biases  = [np.random.randn(neurons) for neurons in size[1:]]
 
 
-	def activation(tensor,activ = 'relu'):
+	def activation_fnc(tensor,activ = 'sigmoid'):
 
 		if activ == 'relu':
 			return tensor*(tensor>0)
@@ -39,30 +39,38 @@ class NeuralNet:
 
 	def sigmoid_prime(tensor):
 
-		tmp = activation(tensor,activ = 'sigmoid')
+		tmp = activation_fnc(tensor,activ = 'sigmoid')
 		return tmp*(1-tmp)
 
 
-	def feedforward(self,x,y):
-
-		'''performs forwardprop on a single batch'''
+	def backprop(self,x,y):
+		'''Performs backpropagation'''
 		
-		prediction = x			
+		zs = []
+		activation = x
+		activations = [x]			
 		for weights,biases in zip(self.weights,self.biases):
-			prediction = np.dot(prediction,weights)
+			activation = np.dot(activation,weights)
 			for row in prediction:
 				row += biases
+			zs.append(activation)
+			activation = activation_fnc(activation)
+			activations.append(activation)
 
-			prediction = activation(prediction)
+		# BACKPROPAGATION
+		nabla_w_list = [np.zeros(w.shape) for w in self.weights]
+		nabla_b_list = [np.zeros(b.shape) for b in self.biases]
 
-		# now prediction is num_samples X num_output_features
-		return prediction
+		dCostda = self.cost_prime(y,activations[-1])
+		dCostdz = dCostda * sigmoid_prime(zs[-1])
+		for l in range(self.num_layer):
+			
 
-
-	def backprop(self):
-		pass
 
 	def cost(self):
+		pass
+
+	def cost_prime(self,y,final_activation):
 		pass
 
 
@@ -99,11 +107,8 @@ class NeuralNet:
 
 			for x,y in batch_data:
 				
-				# FEEDFORWARD
-				activations = self.feedforward(x,y)	# now prediction is batch_size X num_output_features
-
 				# BACKPROP
-				delta_w, delta_b = self.backprop(y,prediction)  # delta_w and delta_b structurally 
+				delta_w, delta_b = self.backprop(x,y)  # delta_w and delta_b structurally 
 													   # similar to weights and biases
 
 				# UPDATION

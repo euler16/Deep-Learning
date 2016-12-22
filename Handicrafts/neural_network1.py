@@ -13,6 +13,10 @@ class NeuralNet:
 		layer
 
 		number of neurons in input = number of features
+		number of neurons in output layer = number of output features
+											(this may be greater than 1 such as in case of MNIST
+											 there output features represent the probabilities
+											 of an image belonging to a particular class)
 		'''
 
 		self.architect = architect
@@ -39,18 +43,38 @@ class NeuralNet:
 		return tmp*(1-tmp)
 
 
-	def backprop():
+	def feedforward(self,x,y):
+
+		'''performs forwardprop on a single batch'''
+		
+		prediction = x			
+		for weights,biases in zip(self.weights,self.biases):
+			prediction = np.dot(prediction,weights)
+			for row in prediction:
+				row += biases
+
+			prediction = activation(prediction)
+
+		# now prediction is num_samples X num_output_features
+		return prediction
+
+
+	def backprop(self):
 		pass
 
-	def cost():
+	def cost(self):
 		pass
 
 
-	def train(self,x_train,y_train,batch_size = 1,epochs = 100):
+	def train(self,x_train,y_train,eta = 0.001,batch_size = 1,epochs = 100):
 		'''Makes batches, applies feedforward and backprop'''
 		'''ASSUMPTIONS:- 
 		x_train : num_samples X num_features
-		y_train : num_samples X num_output_features'''
+		y_train : num_samples X num_output_features
+
+		OUTPUT:- 
+		training_log : cost vs epoch
+		'''
 
 		num_samples = len(y_train)
 		num_features = self.architect[0]
@@ -70,21 +94,22 @@ class NeuralNet:
 			               for k in range(0,num_samples,batch_size) ]
 
 		# training starts
-		log = []
+		training_log = []
 		for epoch in range(epochs):
 
 			for x,y in batch_data:
 				
 				# FEEDFORWARD
-				prediction = x			
-				for weights,biases in zip(self.weights,self.biases):
+				activations = self.feedforward(x,y)	# now prediction is batch_size X num_output_features
 
-					prediction = np.dot(prediction,weights)
-					for row in prediction:
-						row += biases
+				# BACKPROP
+				delta_w, delta_b = self.backprop(y,prediction)  # delta_w and delta_b structurally 
+													   # similar to weights and biases
 
-					prediction = activation(prediction)
+				# UPDATION
+				alpha = eta/num_samples
+				self.weights = [ weights + alpha * dw for weights,dw in zip(self.weights,delta_w)  ]
+				self.biases = [ biases + alpha * db for biases,db in zip(self.biases,delta_b) ]
 
-
-
-		
+			total_prediction
+			training_log.append(self.cost(x_train,y_train))

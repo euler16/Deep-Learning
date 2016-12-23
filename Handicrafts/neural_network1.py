@@ -50,25 +50,32 @@ class NeuralNet:
 		activation = x
 		activations = [x]			
 		for weights,biases in zip(self.weights,self.biases):
-			activation = np.dot(activation,weights)
-			for row in prediction:
+			z = np.dot(activation,weights)
+			for row in z:
 				row += biases
-			zs.append(activation)
-			activation = activation_fnc(activation)
+			zs.append(z)
+			activation = activation_fnc(z)
 			activations.append(activation)
 
 		# BACKPROPAGATION
-		nabla_w_list = [np.zeros(w.shape) for w in self.weights]
-		nabla_b_list = [np.zeros(b.shape) for b in self.biases]
+		nabla_w = [np.zeros(w.shape) for w in self.weights]
+		nabla_b = [np.zeros(b.shape) for b in self.biases]
 
-		back_weights = self.weights[::-1]
-		back_biases = self.biases[::-1]
+		# back_weights = self.weights[::-1]
+		# back_biases = self.biases[::-1]
+		# back_zs = zs[::-1]
 
-		dCostda = self.cost_prime(y,activations[-1])
-		dCostda_s = [dCostda]
-		# dCostdz = dCostda * sigmoid_prime(zs[-1])
-		for r_weights,r_biases in zip(back_weights,back_biases):
-			dCostda = np.
+		delta = self.cost_prime(y,activations[-1]) * sigmoid_prime(zs[-1])
+		nabla_b[-1] = delta
+		nabla_w[-1] = np.dot(activations[-2].transpose(),delta)
+		for l in range(2,self.num_layer):
+			z = zs[-l]
+			sp = sigmoid_prime(z)
+			delta = np.dot(delta,self.weights[-l+1]) * sp
+			nabla_b[-l] = delta
+			nabla_w[-l] = np.dot(activations[-l-1].transpose(),delta)
+
+		return nabla_w,nabla_b
 
 
 
@@ -76,7 +83,7 @@ class NeuralNet:
 		pass
 
 	def cost_prime(self,y,final_activation):
-		pass
+		return final_activation - y
 
 
 	def train(self,x_train,y_train,eta = 0.001,batch_size = 1,epochs = 100):
@@ -118,8 +125,8 @@ class NeuralNet:
 
 				# UPDATION
 				alpha = eta/num_samples
-				self.weights = [ weights + alpha * dw for weights,dw in zip(self.weights,delta_w)  ]
-				self.biases = [ biases + alpha * db for biases,db in zip(self.biases,delta_b) ]
+				self.weights = [ weights - alpha * dw for weights,dw in zip(self.weights,delta_w)  ]
+				self.biases = [ biases - alpha * db for biases,db in zip(self.biases,delta_b) ]
 
 			total_prediction
 			training_log.append(self.cost(x_train,y_train))

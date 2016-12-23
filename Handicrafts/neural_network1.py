@@ -25,7 +25,7 @@ class NeuralNet:
 		self.biases  = [np.random.randn(neurons) for neurons in size[1:]]
 
 
-	def activation(tensor,activ = 'relu'):
+	def activation_fnc(tensor,activ = 'sigmoid'):
 
 		if activ == 'relu':
 			return tensor*(tensor>0)
@@ -39,31 +39,51 @@ class NeuralNet:
 
 	def sigmoid_prime(tensor):
 
-		tmp = activation(tensor,activ = 'sigmoid')
+		tmp = activation_fnc(tensor,activ = 'sigmoid')
 		return tmp*(1-tmp)
 
 
-	def feedforward(self,x,y):
-
-		'''performs forwardprop on a single batch'''
+	def backprop(self,x,y):
+		'''Performs backpropagation'''
 		
-		prediction = x			
+		zs = []
+		activation = x
+		activations = [x]			
 		for weights,biases in zip(self.weights,self.biases):
-			prediction = np.dot(prediction,weights)
-			for row in prediction:
+			z = np.dot(activation,weights)
+			for row in z:
 				row += biases
+			zs.append(z)
+			activation = activation_fnc(z)
+			activations.append(activation)
 
-			prediction = activation(prediction)
+		# BACKPROPAGATION
+		nabla_w = [np.zeros(w.shape) for w in self.weights]
+		nabla_b = [np.zeros(b.shape) for b in self.biases]
 
-		# now prediction is num_samples X num_output_features
-		return prediction
+		# back_weights = self.weights[::-1]
+		# back_biases = self.biases[::-1]
+		# back_zs = zs[::-1]
+
+		delta = self.cost_prime(y,activations[-1]) * sigmoid_prime(zs[-1])
+		nabla_b[-1] = delta
+		nabla_w[-1] = np.dot(activations[-2].transpose(),delta)
+		for l in range(2,self.num_layer):
+			z = zs[-l]
+			sp = sigmoid_prime(z)
+			delta = np.dot(delta,self.weights[-l+1]) * sp
+			nabla_b[-l] = delta
+			nabla_w[-l] = np.dot(activations[-l-1].transpose(),delta)
+
+		return nabla_w,nabla_b
 
 
-	def backprop(self):
-		pass
 
 	def cost(self):
 		pass
+
+	def cost_prime(self,y,final_activation):
+		return final_activation - y
 
 
 	def train(self,x_train,y_train,eta = 0.001,batch_size = 1,epochs = 100):
@@ -99,17 +119,14 @@ class NeuralNet:
 
 			for x,y in batch_data:
 				
-				# FEEDFORWARD
-				activations = self.feedforward(x,y)	# now prediction is batch_size X num_output_features
-
 				# BACKPROP
-				delta_w, delta_b = self.backprop(y,prediction)  # delta_w and delta_b structurally 
+				delta_w, delta_b = self.backprop(x,y)  # delta_w and delta_b structurally 
 													   # similar to weights and biases
 
 				# UPDATION
 				alpha = eta/num_samples
-				self.weights = [ weights + alpha * dw for weights,dw in zip(self.weights,delta_w)  ]
-				self.biases = [ biases + alpha * db for biases,db in zip(self.biases,delta_b) ]
+				self.weights = [ weights - alpha * dw for weights,dw in zip(self.weights,delta_w)  ]
+				self.biases = [ biases - alpha * db for biases,db in zip(self.biases,delta_b) ]
 
 			total_prediction
 			training_log.append(self.cost(x_train,y_train))

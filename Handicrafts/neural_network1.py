@@ -61,10 +61,15 @@ class NeuralNet:
 		nabla_w_list = [np.zeros(w.shape) for w in self.weights]
 		nabla_b_list = [np.zeros(b.shape) for b in self.biases]
 
+		back_weights = self.weights[::-1]
+		back_biases = self.biases[::-1]
+
 		dCostda = self.cost_prime(y,activations[-1])
-		dCostdz = dCostda * sigmoid_prime(zs[-1])
-		for l in range(self.num_layer):
-			
+		dCostda_s = [dCostda]
+		# dCostdz = dCostda * sigmoid_prime(zs[-1])
+		for r_weights,r_biases in zip(back_weights,back_biases):
+			dCostda = np.
+
 
 
 	def cost(self):

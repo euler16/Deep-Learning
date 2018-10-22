@@ -1,2 +1,2 @@
 # Udacity-Deep-Learning
-my IPy notebooks and other files made during the course 
+My IPy notebooks and other files made during the course. 
